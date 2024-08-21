@@ -52,6 +52,15 @@ public class ThirdPersonMovement : MonoBehaviour
     public bool useProIKFeature = false;
     public bool showSolverDegub = true;
 
+    [Header("Sand Pickup")]
+    [SerializeField] private LayerMask sandMask;
+    [SerializeField] private float maxPickupDistance = 8.0f;
+    [SerializeField] private float startingSand = 1000.0f;
+    [SerializeField] private float maxSand = 1000.0f;
+    public static float sand;
+
+    [SerializeField] private ParticleSystem sandfallParticleSystem;
+
     #endregion
 
     #region Initialization
@@ -81,16 +90,31 @@ public class ThirdPersonMovement : MonoBehaviour
         groundCheck = new GameObject("GroundCheck").transform;
         groundCheck.SetParent(transform);
         groundCheck.localPosition = new Vector3(0, -characterController.height /2, 0);
+
+        sand = this.startingSand;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        //Press the space bar to apply no locking to the Cursor
+        if (Input.GetKey(KeyCode.Space))
+            Cursor.lockState = CursorLockMode.None;
+        else
+            Cursor.lockState = CursorLockMode.Locked;
+
         handleMovement();
         handleRotation();
 
         handleGravity();
+
+        sand -= Time.deltaTime * 10;
+        SandPickupCheck();
+        Debug.Log(sand);
+
+        var em = sandfallParticleSystem.emission;
+        em.rateOverTime = Random.Range(8.0f, 12.0f) * (sand / maxSand);
+        em.rateOverDistance = Random.Range(0.8f, 1.2f) * (sand / maxSand);
 
     }
     #endregion
@@ -282,4 +306,19 @@ public class ThirdPersonMovement : MonoBehaviour
     /*private void OnDrawGizmos(){
 
     }*/
+
+    private void SandPickupCheck()
+    {
+        RaycastHit hit;
+
+        if (Physics.Raycast(cam.position, cam.forward, out hit, 100, sandMask, QueryTriggerInteraction.Collide))
+        {
+            if (Vector3.Distance(this.transform.position, hit.transform.position) <= maxPickupDistance)
+            {
+                if (showSolverDegub)
+                    Debug.DrawRay(cam.position, cam.forward * 100, Color.yellow);
+            }
+        }
+
+    }
 }
