@@ -21,6 +21,8 @@ public class ThirdPersonMovement : MonoBehaviour
     public float turnSmoothTime = 0.8f;
     float turnSmoothVelocity;
 
+    public float moveSpeedMultiplier = 1;
+
     public Transform cam;
 
     //Gravidade
@@ -61,6 +63,8 @@ public class ThirdPersonMovement : MonoBehaviour
 
     [SerializeField] private ParticleSystem sandfallParticleSystem;
 
+
+
     #endregion
 
     #region Initialization
@@ -92,6 +96,8 @@ public class ThirdPersonMovement : MonoBehaviour
         groundCheck.localPosition = new Vector3(0, -characterController.height /2, 0);
 
         sand = this.startingSand;
+
+        SavePlayer();
     }
 
     // Update is called once per frame
@@ -118,9 +124,14 @@ public class ThirdPersonMovement : MonoBehaviour
         em.rateOverDistance = Random.Range(1.0f, 1.4f) * (sand / maxSand);
 
         if (sand < 0 && animator.speed > 0)
-        { animator.speed -= Time.deltaTime * 0.1f; }
+        { moveSpeedMultiplier -= Time.deltaTime * 0.1f; }
         else if (sand > 0)
-        { animator.speed = 1.0f; }
+        { moveSpeedMultiplier = 1.0f; }
+        animator.speed = moveSpeedMultiplier;
+
+        if (sand < -100 && Input.GetButtonDown("Fire1")) {
+            LoadPlayer();
+        }
 
     }
     #endregion
@@ -331,9 +342,41 @@ public class ThirdPersonMovement : MonoBehaviour
                 if (Input.GetButtonDown("Fire1"))
                 {
                     sand = this.maxSand;
+                    SavePlayer();
                 }
             }
         }
 
+    }
+
+    public float getSand() {
+        return sand;
+    }
+
+    public void setSand(float n) {
+        sand = n;
+        return;
+    }
+
+    public void SavePlayer()
+    {
+        SaveSystem.SavePlayer(this);
+    }
+
+    public void LoadPlayer()
+    {
+        PlayerData data = SaveSystem.LoadPlayer();
+
+        Vector3 position;
+        position.x = data.position[0];
+        position.y = data.position[1];
+        position.z = data.position[2];
+        transform.position = position;
+
+        transform.rotation = Quaternion.Euler(data.rotation[0], data.rotation[1], data.rotation[2]);
+
+        moveSpeedMultiplier = data.moveSpeedMultiplier;
+
+        sand = data.sand;
     }
 }
