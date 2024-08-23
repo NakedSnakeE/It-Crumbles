@@ -77,7 +77,7 @@ public class ThirdPersonMovement : MonoBehaviour
             movementPressed = currentMovement.x != 0 || currentMovement.y != 0;
         };
     }
-
+    
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -108,13 +108,14 @@ public class ThirdPersonMovement : MonoBehaviour
 
         handleGravity();
 
-        sand -= Time.deltaTime * 10;
+        if (animator.GetBool(isWalkingHash)) { sand -= Time.deltaTime * 2; }
+        else { sand -= Time.deltaTime * 1; }
         SandPickupCheck();
         Debug.Log(sand);
 
         var em = sandfallParticleSystem.emission;
-        em.rateOverTime = Random.Range(8.0f, 12.0f) * (sand / maxSand);
-        em.rateOverDistance = Random.Range(0.8f, 1.2f) * (sand / maxSand);
+        em.rateOverTime = Random.Range(10.0f, 14.0f) * (sand / maxSand);
+        em.rateOverDistance = Random.Range(1.0f, 1.4f) * (sand / maxSand);
 
     }
     #endregion
@@ -317,6 +318,11 @@ public class ThirdPersonMovement : MonoBehaviour
             {
                 if (showSolverDegub)
                     Debug.DrawRay(cam.position, cam.forward * 100, Color.yellow);
+
+                if (Input.GetButtonDown("Fire1"))
+                {
+                    sand = this.maxSand;
+                }
             }
         }
 
