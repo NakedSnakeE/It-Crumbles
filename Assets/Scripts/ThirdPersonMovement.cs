@@ -108,7 +108,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
         handleGravity();
 
-        if (animator.GetBool(isWalkingHash)) { sand -= Time.deltaTime * 2; }
+        if (animator.GetBool(isWalkingHash)) { sand -= Time.deltaTime * 4; }
         else { sand -= Time.deltaTime * 1; }
         SandPickupCheck();
         Debug.Log(sand);
@@ -117,6 +117,11 @@ public class ThirdPersonMovement : MonoBehaviour
         em.rateOverTime = Random.Range(10.0f, 14.0f) * (sand / maxSand);
         em.rateOverDistance = Random.Range(1.0f, 1.4f) * (sand / maxSand);
 
+        if (sand < 0 && animator.speed > 0)
+        { animator.speed -= Time.deltaTime * 0.1f; }
+        else if (sand > 0)
+        { animator.speed = 1.0f; }
+
     }
     #endregion
 
@@ -124,13 +129,17 @@ public class ThirdPersonMovement : MonoBehaviour
 
     void handleRotation()
     {
-        Vector3 newPosition = new Vector3(currentMovement.x, 0f, currentMovement.y).normalized;
+        if (animator.speed > 0)
+        {
+            Vector3 newPosition = new Vector3(currentMovement.x, 0f, currentMovement.y).normalized;
 
-        if(newPosition.magnitude >= 0.1f){
-            float targetAngle = Mathf.Atan2(newPosition.x, newPosition.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            if (newPosition.magnitude >= 0.1f)
+            {
+                float targetAngle = Mathf.Atan2(newPosition.x, newPosition.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime + ((1 - animator.speed)*turnSmoothTime*2));
 
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            }
         }
     }
 

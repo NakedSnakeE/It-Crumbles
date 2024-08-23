@@ -35493,7 +35493,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   maxPickupDistance: 8
-  startingSand: 1000
+  startingSand: 500
   maxSand: 1000
   sandfallParticleSystem: {fileID: 2067969663}
 --- !u!54 &721693191
@@ -53167,21 +53167,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f77d7a83ead32a641adced4de62ad494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Targets: []
-  m_Context: {fileID: 0}
-  m_IsDirty: 0
-  m_ReferenceTargetIndex: 0
-  m_InspectorMode: 0
-  hideInspector: 0
-  m_HasUnsavedChanges: 0
-  <saveChangesMessage>k__BackingField: 
-  <firstInspectedEditor>k__BackingField: 0
-  <alwaysAllowExpansion>k__BackingField: 0
-  mesh: {fileID: 0}
-  mf: {fileID: 0}
-  verts: []
-  normals: []
-  normalsLength: 1
 --- !u!33 &8534081336925763653
 MeshFilter:
   m_ObjectHideFlags: 0
