@@ -21,6 +21,8 @@ public class ThirdPersonMovement : MonoBehaviour
     public float turnSmoothTime = 0.8f;
     float turnSmoothVelocity;
 
+    public float moveSpeedMultiplier = 1;
+
     public Transform cam;
 
     //Gravidade
@@ -52,6 +54,17 @@ public class ThirdPersonMovement : MonoBehaviour
     public bool useProIKFeature = false;
     public bool showSolverDegub = true;
 
+    [Header("Sand Pickup")]
+    [SerializeField] private LayerMask sandMask;
+    [SerializeField] private float maxPickupDistance = 8.0f;
+    [SerializeField] private float startingSand = 1000.0f;
+    [SerializeField] private float maxSand = 1000.0f;
+    public static float sand;
+
+    [SerializeField] private ParticleSystem sandfallParticleSystem;
+
+
+
     #endregion
 
     #region Initialization
@@ -68,7 +81,7 @@ public class ThirdPersonMovement : MonoBehaviour
             movementPressed = currentMovement.x != 0 || currentMovement.y != 0;
         };
     }
-
+    
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -81,16 +94,44 @@ public class ThirdPersonMovement : MonoBehaviour
         groundCheck = new GameObject("GroundCheck").transform;
         groundCheck.SetParent(transform);
         groundCheck.localPosition = new Vector3(0, -characterController.height /2, 0);
+
+        sand = this.startingSand;
+
+        SavePlayer();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        //Press the space bar to apply no locking to the Cursor
+        if (Input.GetKey(KeyCode.Space))
+            Cursor.lockState = CursorLockMode.None;
+        else
+            Cursor.lockState = CursorLockMode.Locked;
+
         handleMovement();
         handleRotation();
 
         handleGravity();
+
+        if (animator.GetBool(isWalkingHash)) { sand -= Time.deltaTime * 4; }
+        else { sand -= Time.deltaTime * 1; }
+        SandPickupCheck();
+        Debug.Log(sand);
+
+        var em = sandfallParticleSystem.emission;
+        em.rateOverTime = Random.Range(10.0f, 14.0f) * (sand / maxSand);
+        em.rateOverDistance = Random.Range(1.0f, 1.4f) * (sand / maxSand);
+
+        if (sand < 0 && animator.speed > 0)
+        { moveSpeedMultiplier -= Time.deltaTime * 0.1f; }
+        else if (sand > 0)
+        { moveSpeedMultiplier = 1.0f; }
+        animator.speed = moveSpeedMultiplier;
+
+        if (sand < -100 && Input.GetButtonDown("Fire1")) {
+            LoadPlayer();
+        }
 
     }
     #endregion
@@ -99,13 +140,17 @@ public class ThirdPersonMovement : MonoBehaviour
 
     void handleRotation()
     {
-        Vector3 newPosition = new Vector3(currentMovement.x, 0f, currentMovement.y).normalized;
+        if (animator.speed > 0)
+        {
+            Vector3 newPosition = new Vector3(currentMovement.x, 0f, currentMovement.y).normalized;
 
-        if(newPosition.magnitude >= 0.1f){
-            float targetAngle = Mathf.Atan2(newPosition.x, newPosition.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            if (newPosition.magnitude >= 0.1f)
+            {
+                float targetAngle = Mathf.Atan2(newPosition.x, newPosition.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime + ((1 - animator.speed)*turnSmoothTime*2));
 
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            }
         }
     }
 
@@ -282,4 +327,56 @@ public class ThirdPersonMovement : MonoBehaviour
     /*private void OnDrawGizmos(){
 
     }*/
+
+    private void SandPickupCheck()
+    {
+        RaycastHit hit;
+
+        if (Physics.Raycast(cam.position, cam.forward, out hit, 100, sandMask, QueryTriggerInteraction.Collide))
+        {
+            if (Vector3.Distance(this.transform.position, hit.transform.position) <= maxPickupDistance)
+            {
+                if (showSolverDegub)
+                    Debug.DrawRay(cam.position, cam.forward * 100, Color.yellow);
+
+                if (Input.GetButtonDown("Fire1"))
+                {
+                    sand = this.maxSand;
+                    SavePlayer();
+                }
+            }
+        }
+
+    }
+
+    public float getSand() {
+        return sand;
+    }
+
+    public void setSand(float n) {
+        sand = n;
+        return;
+    }
+
+    public void SavePlayer()
+    {
+        SaveSystem.SavePlayer(this);
+    }
+
+    public void LoadPlayer()
+    {
+        PlayerData data = SaveSystem.LoadPlayer();
+
+        Vector3 position;
+        position.x = data.position[0];
+        position.y = data.position[1];
+        position.z = data.position[2];
+        transform.position = position;
+
+        transform.rotation = Quaternion.Euler(data.rotation[0], data.rotation[1], data.rotation[2]);
+
+        moveSpeedMultiplier = data.moveSpeedMultiplier;
+
+        sand = data.sand;
+    }
 }
